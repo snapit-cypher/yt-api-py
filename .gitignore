@@ -1,0 +1,61 @@
+# Ignore Python virtual environment files
+__pycache__/
+venv/
+env/
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+.vscode/
+
+# Ignore local development files
+*.log
+*.db
+*.sqlite
+
+# Ignore generated files
+dist/
+build/
+*.egg-info/
+
+# Ignore VS Code specific files
+.vscode/
+
+# Ignore PyCharm specific files
+.idea/
+
+# Ignore system files
+.DS_Store
+
+# Ignore editor/IDE-specific files
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Ignore the Python bytecode cache
+__pycache__/
+*.pyc
+
+# Ignore environment configuration files
+.env
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore pycache directories
+__pycache__/
+
+# Ignore Log files
+log/
+logs/
+
+# Ignore user-specific IDE configurations
+.vscode/
+.pycharm_helpers/
+
+# Ignore database files
+*.sqlite
+
+# Ignore environment-specific files
+.env
