@@ -1,9 +1,11 @@
+import datetime
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from internals.utils import (
     generate_unique_id,
     get_audio,
+    get_video,
     handle_response
 )
 
@@ -15,11 +17,14 @@ class Item(BaseModel):
     audio: bool
     start_time: float
     end_time: float
+    quality: str
+    compress: bool
 
 
 @app.get("/")
 def status():
     return f"The API is working fine - {datetime.datetime.now()}".upper()
+
 
 @app.post("/youtube-downloader/")
 async def youtube_downloader(item: Item):
@@ -31,6 +36,16 @@ async def youtube_downloader(item: Item):
 
         if audio:
             status, filename = get_audio(url, start, end)
+            if status:
+                return FileResponse(filename)
+            else:
+                raise Exception(filename)
+
+        else:
+            quality = item.quality
+            compress = item.compress
+            status, filename = get_video(
+                url, start, end, quality=quality, compress=compress)
             if status:
                 return FileResponse(filename)
             else:
