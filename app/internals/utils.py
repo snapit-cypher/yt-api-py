@@ -10,6 +10,7 @@ from .constants import DOWNLOAD_FOLDER
 def generate_unique_id():
     return str(uuid.uuid4())
 
+
 def clean_filename(filename):
     # Define a regular expression to match characters that should be removed
     invalid_chars = r'[\/:*?"<>|]'
@@ -25,14 +26,17 @@ def clean_filename(filename):
 
     return cleaned_filename.replace(' ', '_')
 
+
 def attach_folder(file_name, folder_type):
     return f"{DOWNLOAD_FOLDER}/{'raw' if folder_type == 'raw' else 'output'}/{file_name}"
+
 
 def handle_response(status, data):
     return {
         'error': not status,
         'data': data,
     }
+
 
 def get_audio(video_url, start_time, end_time):
     try:
@@ -78,14 +82,36 @@ def get_audio(video_url, start_time, end_time):
     except Exception as e:
         return False, str(e)
 
+
 def get_video(video_url, start_time, end_time, **kwargs):
     try:
         uuid = generate_unique_id()
         download_location = attach_folder(uuid, folder_type='raw')
+        quality = kwargs.get('quality', "")
+        compres = kwargs.get('compress', "")
+
         ydl_opts = {
-            'format': 'best[ext=mp4]',
+            'format': 'bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360]/best[ext=mp4]',
             'outtmpl': f'{download_location}.%(ext)s',
         }
+
+        if quality:
+            if quality == '144':
+                ydl_opts['format'] = 'bestvideo[height<=144][ext=mp4]+bestaudio[ext=m4a]/best[height<=144]/best[ext=mp4]'
+            elif quality == '240':
+                ydl_opts['format'] = 'bestvideo[height<=240][ext=mp4]+bestaudio[ext=m4a]/best[height<=240]/best[ext=mp4]'
+            elif quality == '360':
+                ydl_opts['format'] = 'bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360]/best[ext=mp4]'
+            elif quality == '480':
+                ydl_opts['format'] = 'bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480]/best[ext=mp4]'
+            elif quality == '720':
+                ydl_opts['format'] = 'bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720]/best[ext=mp4]'
+            elif quality == '1080':
+                ydl_opts['format'] = 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080]/best[ext=mp4]'
+            elif quality == '1440':
+                ydl_opts['format'] = 'bestvideo[height<=1440][ext=mp4]+bestaudio[ext=m4a]/best[height<=1440]/best[ext=mp4]'
+        else:
+            return False, "Video Quality is not defined"
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(video_url, download=True)
