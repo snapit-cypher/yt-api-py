@@ -4,7 +4,7 @@ import math
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from internals.utils import (
+from .internals.utils import (
     generate_unique_id,
     get_audio,
     get_video,
