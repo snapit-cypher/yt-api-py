@@ -38,13 +38,13 @@ def handle_response(status, data):
     }
 
 
-def get_audio(video_url, start_time, end_time):
+def get_audio(video_url, start_time, end_time, temp_dir):
     try:
         uuid = generate_unique_id()
-        download_location = attach_folder(uuid, folder_type='raw')
+        download_location =  os.path.join(temp_dir, f"raw")
         ydl_opts = {
             'format': 'bestaudio/best',
-            'outtmpl': f'{download_location}.%(ext)s',
+            'outtmpl': f'{download_location}/{uuid}.%(ext)s',
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
@@ -55,15 +55,13 @@ def get_audio(video_url, start_time, end_time):
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(video_url, download=True)
 
-            # Check if 'start_time' and 'end_time' are within the video duration
             if start_time < 0:
                 start_time = 0
             if end_time > info_dict['duration']:
                 end_time = info_dict['duration']
 
-            filename = attach_folder(f"{uuid}.mp3", folder_type="raw")
-            trimmed_filename = attach_folder(
-                f"{uuid}_trimmed.mp3", folder_type="output")
+            filename = f"{download_location}/{uuid}.mp3"
+            output_filename = attach_folder(f"{uuid}_output.mp3", folder_type="output")
 
             cmd = [
                 "ffmpeg",
@@ -72,12 +70,11 @@ def get_audio(video_url, start_time, end_time):
                 "-to", str(end_time),
                 "-c:v", "copy",
                 "-c:a", "copy",
-                trimmed_filename
+                output_filename
             ]
 
             subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            os.remove(filename)
-            return True, trimmed_filename
+            return True, output_filename
 
     except Exception as e:
         return False, str(e)
@@ -86,13 +83,18 @@ def get_audio(video_url, start_time, end_time):
 def get_video(video_url, start_time, end_time, **kwargs):
     try:
         uuid = generate_unique_id()
-        download_location = attach_folder(uuid, folder_type='raw')
+        output_filename = attach_folder(
+            f"{uuid}_output.mp4", folder_type="output")
         quality = kwargs.get('quality', "")
-        compres = kwargs.get('compress', "")
 
         ydl_opts = {
             'format': 'bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360]/best[ext=mp4]',
-            'outtmpl': f'{download_location}.%(ext)s',
+            'outtmpl': f'{output_filename}',
+            'external_downloader': 'ffmpeg',
+            'external_downloader_args': [
+                '-ss', str(start_time),
+                '-to', str(end_time),
+            ],
         }
 
         if quality:
@@ -115,29 +117,7 @@ def get_video(video_url, start_time, end_time, **kwargs):
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(video_url, download=True)
-            # Chec if 'start_time' and 'end_time' are within the video duration
-            if start_time < 0:
-                start_time = 0
-            if end_time > info_dict['duration']:
-                end_time = info_dict['duration']
-
-            filename = attach_folder(f"{uuid}.mp4", folder_type="raw")
-            trimmed_filename = attach_folder(
-                f"{uuid}_trimmed.mp4", folder_type="output")
-
-            cmd = [
-                "ffmpeg",
-                "-ss", str(start_time),
-                "-i", filename,
-                "-to", str(end_time),
-                "-c:v", "copy",
-                "-c:a", "copy",
-                trimmed_filename
-            ]
-
-            subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            os.remove(filename)
-            return True, trimmed_filename
+            return True, output_filename
 
     except Exception as e:
         return False, str(e)

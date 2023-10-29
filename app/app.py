@@ -1,4 +1,6 @@
 import datetime
+import tempfile
+import math
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -18,7 +20,6 @@ class Item(BaseModel):
     start_time: float
     end_time: float
     quality: str
-    compress: bool
 
 
 @app.get("/")
@@ -31,21 +32,21 @@ async def youtube_downloader(item: Item):
     try:
         url = item.url
         audio = item.audio
-        start = item.start_time
-        end = item.end_time
+        start = math.floor(item.start_time)
+        end = math.floor(item.end_time)
 
         if audio:
-            status, filename = get_audio(url, start, end)
-            if status:
-                return FileResponse(filename)
-            else:
-                raise Exception(filename)
+            with tempfile.TemporaryDirectory() as temp_dir:
+                status, filename = get_audio(url, start, end, temp_dir)
+                if status:
+                    return FileResponse(filename)
+                else:
+                    raise Exception(filename)
 
         else:
             quality = item.quality
-            compress = item.compress
             status, filename = get_video(
-                url, start, end, quality=quality, compress=compress)
+                url, start, end, quality=quality)
             if status:
                 return FileResponse(filename)
             else:
