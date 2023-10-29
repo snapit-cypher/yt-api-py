@@ -41,10 +41,17 @@ def handle_response(status, data):
 def get_audio(video_url, start_time, end_time, temp_dir):
     try:
         uuid = generate_unique_id()
-        download_location =  os.path.join(temp_dir, f"raw")
+        output_filename = attach_folder(
+            f"{uuid}_output", folder_type="output")
+
         ydl_opts = {
             'format': 'bestaudio/best',
-            'outtmpl': f'{download_location}/{uuid}.%(ext)s',
+            'outtmpl': f'{output_filename}',
+            'external_downloader': 'ffmpeg',
+            'external_downloader_args': [
+                '-ss', str(start_time),
+                '-to', str(end_time),
+            ],
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
@@ -54,27 +61,7 @@ def get_audio(video_url, start_time, end_time, temp_dir):
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(video_url, download=True)
-
-            if start_time < 0:
-                start_time = 0
-            if end_time > info_dict['duration']:
-                end_time = info_dict['duration']
-
-            filename = f"{download_location}/{uuid}.mp3"
-            output_filename = attach_folder(f"{uuid}_output.mp3", folder_type="output")
-
-            cmd = [
-                "ffmpeg",
-                "-ss", str(start_time),
-                "-i", filename,
-                "-to", str(end_time),
-                "-c:v", "copy",
-                "-c:a", "copy",
-                output_filename
-            ]
-
-            subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            return True, output_filename
+            return True, f"{output_filename}.mp3"
 
     except Exception as e:
         return False, str(e)
