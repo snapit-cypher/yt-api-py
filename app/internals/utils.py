@@ -99,6 +99,8 @@ def get_video(video_url, start_time, end_time, **kwargs):
                 ydl_opts['format'] = 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080]/best[ext=mp4]'
             elif quality == '1440':
                 ydl_opts['format'] = 'bestvideo[height<=1440][ext=mp4]+bestaudio[ext=m4a]/best[height<=1440]/best[ext=mp4]'
+            elif quality == "2560":
+                ydl_opts['format'] = 'bestvideo[height<=2560][ext=mp4]+bestaudio[ext=m4a]/best[height<=2560]/best[ext=mp4]'
         else:
             return False, "Video Quality is not defined"
 

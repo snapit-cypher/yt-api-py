@@ -17,6 +17,7 @@ app = FastAPI()
 
 origins = [
     "https://vid-slicer.vercel.app",
+    "http://vid-slicer.vercel.app",
     "http://localhost",
     "http://localhost:5173",
 ]
