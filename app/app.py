@@ -2,8 +2,9 @@ import datetime
 import tempfile
 import math
 from fastapi import FastAPI
-from fastapi.responses import FileResponse
+from starlette.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from .internals.utils import (
     generate_unique_id,
@@ -17,7 +18,7 @@ app = FastAPI()
 origins = [
     "https://vid-slicer.vercel.app",
     "http://localhost",
-    "http://localhost:3000",
+    "http://localhost:5173",
 ]
 
 app.add_middleware(
@@ -53,7 +54,7 @@ async def youtube_downloader(item: Item):
             with tempfile.TemporaryDirectory() as temp_dir:
                 status, filename = get_audio(url, start, end, temp_dir)
                 if status:
-                    return FileResponse(filename)
+                    return FileResponse(filename, media_type="audio/mp3")
                 else:
                     raise Exception(filename)
 
@@ -67,4 +68,5 @@ async def youtube_downloader(item: Item):
                 raise Exception(filename)
 
     except Exception as e:
-        return handle_response(False, str(e))
+        return JSONResponse(status_code=400, content={"error": str(e)})
+
