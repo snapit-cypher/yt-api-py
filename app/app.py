@@ -1,7 +1,7 @@
 import datetime
 import tempfile
 import math
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from starlette.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -10,7 +10,8 @@ from .internals.utils import (
     generate_unique_id,
     get_audio,
     get_video,
-    handle_response
+    handle_response,
+    get_video_information
 )
 
 app = FastAPI()
@@ -42,6 +43,17 @@ class Item(BaseModel):
 def status():
     return f"The API is working fine - {datetime.datetime.now()}".upper()
 
+
+@app.get("/video_info")
+async def info_handler(url: str = Query(..., title="Item Name", description="Enter the item name")):
+    try:
+        status, options = get_video_information(url)
+        if status:
+            return JSONResponse(status_code=200, content={ "data": options })
+        else:
+            raise Exception(options)
+    except Exception as e:
+        return JSONResponse(status_code=400, content={"error": str(e)})
 
 @app.post("/youtube-downloader/")
 async def youtube_downloader(item: Item):

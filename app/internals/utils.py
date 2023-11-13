@@ -66,6 +66,41 @@ def get_audio(video_url, start_time, end_time, temp_dir):
     except Exception as e:
         return False, str(e)
 
+def get_video_information(video_url, **kwargs):
+    try:
+        ydl = yt_dlp.YoutubeDL()
+        with ydl:
+            result = ydl.extract_info(video_url, download=False)
+
+        # Extract relevant information
+        video_info = {
+            "title": result.get("title", "N/A"),
+            "video_thumbnail": result.get("thumbnail", "N/A"),
+            "channel_thumbnail": result.get("thumbnail", "N/A"),
+            "video_formats": []
+        }
+
+        # Extract video format information
+        if 'formats' in result:
+            for format_item in result['formats']:
+                # Filter out formats with audio
+                if format_item.get("video_ext", "none") != "none":
+                    filesize = format_item.get("filesize", "N/A"),
+                    resolution = format_item.get("resolution", "N/A"),
+                    format_note = format_item.get("format_note", "N/A")
+                    
+                    if not "N/A" in [filesize, format_note, resolution]:
+                        format_info = {
+                            "filesize": format_item.get("filesize", "N/A"),
+                            "resolution": format_item.get("resolution", "N/A"),
+                            "format_note": format_item.get("format_note", "N/A")
+                        }
+                        video_info["video_formats"].append(format_info)
+
+            return True, video_info
+    except Exception as e:
+        return False, str(e)
+    
 
 def get_video(video_url, start_time, end_time, **kwargs):
     try:
