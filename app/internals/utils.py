@@ -66,41 +66,40 @@ def get_audio(video_url, start_time, end_time, temp_dir):
     except Exception as e:
         return False, str(e)
 
-def get_video_information(video_url, **kwargs):
+
+def get_video_information(video_url):
     try:
-        ydl = yt_dlp.YoutubeDL()
-        with ydl:
+        with yt_dlp.YoutubeDL() as ydl:
             result = ydl.extract_info(video_url, download=False)
 
-        # Extract relevant information
-        video_info = {
-            "title": result.get("title", "N/A"),
-            "video_thumbnail": result.get("thumbnail", "N/A"),
-            "channel_thumbnail": result.get("thumbnail", "N/A"),
-            "video_formats": []
-        }
+        audio_formats = []
+        video_formats = []
 
-        # Extract video format information
         if 'formats' in result:
             for format_item in result['formats']:
-                # Filter out formats with audio
-                if format_item.get("video_ext", "none") != "none":
+                if format_item.get("audio_ext", "none") != "none" and format_item.get("ext", "N/A") != "mp4":
+                    audio_formats.append({
+                        "filesize": format_item.get("filesize", "N/A")
+                    })
+
+                if format_item.get("video_ext", "none") != "none" and format_item.get("filesize", "none") != ("none" or None):
                     filesize = format_item.get("filesize", "N/A"),
                     resolution = format_item.get("resolution", "N/A"),
                     format_note = format_item.get("format_note", "N/A")
-                    
+
                     if not "N/A" in [filesize, format_note, resolution]:
-                        format_info = {
+                        video_formats.append({
                             "filesize": format_item.get("filesize", "N/A"),
                             "resolution": format_item.get("resolution", "N/A"),
                             "format_note": format_item.get("format_note", "N/A")
-                        }
-                        video_info["video_formats"].append(format_info)
+                        })
+        max_audio_format = max(
+            audio_formats, key=lambda x: x['filesize'], default=None)
+        return True, {"audio_format": max_audio_format, "video_formats": video_formats}
 
-            return True, video_info
     except Exception as e:
         return False, str(e)
-    
+
 
 def get_video(video_url, start_time, end_time, **kwargs):
     try:
@@ -118,7 +117,6 @@ def get_video(video_url, start_time, end_time, **kwargs):
                 '-to', str(end_time),
             ],
         }
-
         if quality:
             if quality == '144':
                 ydl_opts['format'] = 'bestvideo[height<=144][ext=mp4]+bestaudio[ext=m4a]/best[height<=144]/best[ext=mp4]'
