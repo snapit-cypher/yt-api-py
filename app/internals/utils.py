@@ -121,7 +121,7 @@ def get_video(video_url, start_time, end_time, **kwargs):
         if quality:
             res = quality['resolution'].split('x')
             filesize = quality['filesize']
-            ydl_opts['format'] = f'bestvideo[width<={res[0]}][height<={res[1]}][ext=mp4][filesize<={filesize}]+bestaudio[ext=m4a]'
+            ydl_opts['format'] = f'bestvideo[width<={res[0]}][height<={res[1]}][ext=mp4]+bestaudio[ext=m4a]'
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(video_url, download=True)
