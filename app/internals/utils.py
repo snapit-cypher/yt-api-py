@@ -117,25 +117,11 @@ def get_video(video_url, start_time, end_time, **kwargs):
                 '-to', str(end_time),
             ],
         }
+
         if quality:
-            if quality == '144':
-                ydl_opts['format'] = 'bestvideo[height<=144][ext=mp4]+bestaudio[ext=m4a]/best[height<=144]/best[ext=mp4]'
-            elif quality == '240':
-                ydl_opts['format'] = 'bestvideo[height<=240][ext=mp4]+bestaudio[ext=m4a]/best[height<=240]/best[ext=mp4]'
-            elif quality == '360':
-                ydl_opts['format'] = 'bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360]/best[ext=mp4]'
-            elif quality == '480':
-                ydl_opts['format'] = 'bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480]/best[ext=mp4]'
-            elif quality == '720':
-                ydl_opts['format'] = 'bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720]/best[ext=mp4]'
-            elif quality == '1080':
-                ydl_opts['format'] = 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080]/best[ext=mp4]'
-            elif quality == '1440':
-                ydl_opts['format'] = 'bestvideo[height<=1440][ext=mp4]+bestaudio[ext=m4a]/best[height<=1440]/best[ext=mp4]'
-            elif quality == "2560":
-                ydl_opts['format'] = 'bestvideo[height<=2560][ext=mp4]+bestaudio[ext=m4a]/best[height<=2560]/best[ext=mp4]'
-        else:
-            return False, "Video Quality is not defined"
+            res = quality['resolution'].split('x')
+            filesize = quality['filesize']
+            ydl_opts['format'] = f'bestvideo[width<={res[0]}][height<={res[1]}][ext=mp4][filesize<={filesize}]+bestaudio[ext=m4a]'
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(video_url, download=True)

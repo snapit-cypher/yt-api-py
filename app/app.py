@@ -32,8 +32,6 @@ supabase_client = create_client(SUPA_BASE_URL, SUPA_BASE_KEY)
 
 origins = [
     "https://vid-slicer.vercel.app",
-    "http://vid-slicer.vercel.app",
-    "http://localhost",
     "http://localhost:5173",
 ]
 
@@ -51,7 +49,7 @@ class Item(BaseModel):
     audio: bool
     start_time: float
     end_time: float
-    quality: str
+    quality: dict
 
 
 @app.get("/")
