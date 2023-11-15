@@ -60,13 +60,14 @@ def status():
 
 
 @app.get("/order/success")
-async def order_success(session_id: str = Query(...,
-                                                title="Stripe Session",
-                                                description="Id of the Stripe session"
-                                                ), user_id: str = Query(...,
-                                                                        title="User ID",
-                                                                        description="Id of the user"
-                                                                        )):
+async def order_success(session_id: str =
+                        Query(...,
+                              title="Stripe Session",
+                              description="Id of the Stripe session"
+                              ), user_id: str = Query(...,
+                                                      title="User ID",
+                                                      description="Id of the user"
+                                                      )):
     try:
         stripe.api_key = STRIPE_SECTET_KEY
         session = stripe.checkout.Session.retrieve(session_id)
@@ -94,8 +95,7 @@ async def order_success(session_id: str = Query(...,
             "user_id": user_id
         }
         supabase_client.table("UserPlan").insert(data).execute()
-        return RedirectResponse(url="http://localhost:5173")
-        return JSONResponse(status_code=200, content={"data": data})
+        return RedirectResponse(url=FRONTEND_URL)
     except Exception as e:
         return JSONResponse(status_code=400, content={"error": str(e)})
 
