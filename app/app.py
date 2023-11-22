@@ -6,7 +6,7 @@ import stripe
 import os
 from dotenv import load_dotenv
 from fastapi import FastAPI, Query
-from supabase_py import create_client
+from supabase import create_client
 from starlette.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -32,6 +32,7 @@ supabase_client = create_client(SUPA_BASE_URL, SUPA_BASE_KEY)
 
 origins = [
     "https://vid-slicer.vercel.app",
+    "https://www.downloadbazar.com",
     "http://localhost:5173",
 ]
 
@@ -69,31 +70,36 @@ async def order_success(session_id: str =
     try:
         stripe.api_key = STRIPE_SECTET_KEY
         session = stripe.checkout.Session.retrieve(session_id)
-        sub = stripe.Subscription.retrieve(session.subscription)
-
-        plan_id = sub['plan']['id']
-        plan_interval = sub['plan']['interval']
-        plan_interval_count = sub['plan']['interval_count']
-
-        if "year" in plan_interval:
-            days = 365 * plan_interval_count
-        elif "month" in plan_interval:
-            days = 30 * plan_interval_count
-        else:
-            days = 30
-
-        start_date = datetime.datetime.utcfromtimestamp(sub['start_date'])
-        expiry_date = start_date + timedelta(days=days)
-        data = {
-            "bought_at": start_date.strftime('%Y-%m-%d %H:%M:%S UTC'),
-            "expired_at": expiry_date.strftime('%Y-%m-%d %H:%M:%S UTC'),
-            "active": True,
-            "plan": sub['plan']['id'],
-            "stripe_customer_id": session['customer'],
-            "user_id": user_id
-        }
-        supabase_client.table("UserPlan").insert(data).execute()
+        supabase_client.table("UserProfile").update({
+            "customer_id": session['customer'],
+        }).eq('user_id', user_id).execute()
         return RedirectResponse(url=FRONTEND_URL)
+    except Exception as e:
+        return JSONResponse(status_code=400, content={"error": str(e)})
+
+
+@app.get('/stripe/customer/subscriptions')
+async def get_user_subscription(customer_id: str =
+                                Query(...,
+                                      title="Stripe Customer Id",
+                                      description="Id of the Stripe Customer for that user"
+                                      )):
+    try:
+        stripe.api_key = STRIPE_SECTET_KEY
+        subscriptions = stripe.Subscription.list(customer=customer_id)
+
+        for subscription in subscriptions.data:
+            subscription_status = subscription.status
+            if subscription_status == "active":
+                data = {
+                    "subscription_id": subscription.id,
+                    "status": True,
+                    "plan": subscription.plan
+                }
+                return JSONResponse(status_code=200, content=data)
+
+        return JSONResponse(status_code=200, content={
+            "status": False, "plan": None, "subscription_id": None})
     except Exception as e:
         return JSONResponse(status_code=400, content={"error": str(e)})
 
