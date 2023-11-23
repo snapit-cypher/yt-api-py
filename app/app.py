@@ -122,7 +122,7 @@ async def youtube_downloader(item: Item):
         url = item.url
         audio = item.audio
         start = math.floor(item.start_time)
-        end = math.floor(item.end_time)
+        end = math.floor(item.end_time) - 5
 
         if audio:
             with tempfile.TemporaryDirectory() as temp_dir:

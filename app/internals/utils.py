@@ -101,23 +101,46 @@ def get_video_information(video_url):
         return False, str(e)
 
 
+def get_options(start_time, end_time, output_file):
+    if (end_time - start_time) > 290:
+        return {
+            "type": "aria2c",
+            "options": {
+                'format': 'bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360]/best[ext=mp4]',
+                'outtmpl': f'{output_file}',
+                'external_downloader': 'aria2c',
+                'external_downloader_args': [
+                    '--max-connection-per-server', '16',
+                    '--throttled-rate', '100K',
+                ],
+            }
+        }
+    return {
+        "type": "ffmpeg",
+        "options": {
+            'format': 'bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360]/best[ext=mp4]',
+            'outtmpl': f'{output_file}',
+            'compat_options': 'multistreams',
+            'external_downloader': 'ffmpeg',
+            'external_downloader_args': [
+                '-threads', '4',
+                '-ss', str(start_time),
+                '-to', str(end_time),
+            ],
+        }
+    }
+    
+
 def get_video(video_url, start_time, end_time, **kwargs):
     try:
         uuid = generate_unique_id()
         output_filename = attach_folder(
             f"{uuid}_output.mp4", folder_type="output")
         quality = kwargs.get('quality', "")
-
-        ydl_opts = {
-            'format': 'bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360]/best[ext=mp4]',
-            'outtmpl': f'{output_filename}',
-            'external_downloader': 'ffmpeg',
-            'external_downloader_args': [
-                '-ss', str(start_time),
-                '-to', str(end_time),
-            ],
-        }
-
+        
+        options = get_options(start_time, end_time, output_filename)
+        ydl_opts = options['options']
+        
         if quality:
             res = quality['resolution'].split('x')
             filesize = quality['filesize']
@@ -125,6 +148,19 @@ def get_video(video_url, start_time, end_time, **kwargs):
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(video_url, download=True)
+            
+            if options['type'] == 'aria2c':
+                ffmpeg_command = [
+                    'ffmpeg',
+                    '-i', f'{output_filename}',
+                    '-ss', str(start_time),
+                    '-to', str(end_time),
+                    '-c', 'copy',
+                    f'{output_filename}_trimmer.mp4',
+                ]
+                subprocess.run(ffmpeg_command)
+                output_filename = f'{output_filename}_trimmer.mp4'       
+            
             return True, output_filename
 
     except Exception as e:
