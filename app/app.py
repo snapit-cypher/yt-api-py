@@ -68,7 +68,7 @@ async def youtube_downloader(item: Item):
         url = item.url
         audio = item.audio or False # default is video
 
-        trim = item.trim
+        trim = dict(item.trim) if item.trim else None
 
         if audio:
             with tempfile.TemporaryDirectory() as temp_dir:
