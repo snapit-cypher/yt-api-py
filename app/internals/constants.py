@@ -1,1 +1,1 @@
-DOWNLOAD_FOLDER = "app/downloads"
+DOWNLOAD_FOLDER = "/app/downloads"
