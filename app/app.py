@@ -79,8 +79,6 @@ async def youtube_downloader(item: Item):
         else:
             quality = dict(item.quality)
 
-            print(quality)
-
             status, filename = get_video(
                 url, trim, quality)
             if status:
