@@ -16,7 +16,7 @@ python main.py
 
 ## Request example
 
-```json
+```js
 // POST /download
 {
 "url": "https://www.youtube.com/watch?v=d1h2_TygQYM",
@@ -34,7 +34,7 @@ python main.py
 }
 ```
 
-```json
+```js
 // GET /video_info
 HOST:PORT/video_info?url=https://www.youtube.com/watch?v=d1h2_TygQYM
 ```
