@@ -1,6 +1,5 @@
-import os
 import re
-import datetime
+import math
 import yt_dlp
 import uuid
 import subprocess
@@ -38,20 +37,24 @@ def handle_response(status, data):
     }
 
 
-def get_audio(video_url, start_time, end_time, temp_dir):
+def get_audio(video_url, trim, temp_dir):
     try:
         uuid = generate_unique_id()
         output_filename = attach_folder(
             f"{uuid}_output", folder_type="output")
 
+        # if trim exists, add the args to the ydl_opts
+
         ydl_opts = {
             'format': 'bestaudio/best',
             'outtmpl': f'{output_filename}',
             'external_downloader': 'ffmpeg',
-            'external_downloader_args': [
-                '-ss', str(start_time),
-                '-to', str(end_time),
-            ],
+            'external_downloader_args': 
+            trim and
+            [
+                '-ss', str(math.floor(trim['start_time'])),
+                '-to', str(math.floor(trim['end_time']) - 5),
+            ] or [],
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
@@ -101,8 +104,9 @@ def get_video_information(video_url):
         return False, str(e)
 
 
-def get_options(start_time, end_time, output_file):
-    if (end_time - start_time) > 290:
+def get_options(trim, output_file):
+
+    if trim is None:
         return {
             "type": "aria2c",
             "options": {
@@ -115,6 +119,24 @@ def get_options(start_time, end_time, output_file):
                 ],
             }
         }
+    
+    start = math.floor(trim['start_time'])
+    end = math.floor(trim['end_time']) - 5
+
+    if (end - start) > 290:
+        return {
+            "type": "aria2c",
+            "options": {
+                'format': 'bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360]/best[ext=mp4]',
+                'outtmpl': f'{output_file}',
+                'external_downloader': 'aria2c',
+                'external_downloader_args': [
+                    '--max-connection-per-server', '16',
+                    '--throttled-rate', '100K',
+                ],
+            }
+        }
+    
     return {
         "type": "ffmpeg",
         "options": {
@@ -124,24 +146,24 @@ def get_options(start_time, end_time, output_file):
             'external_downloader': 'ffmpeg',
             'external_downloader_args': [
                 '-threads', '4',
-                '-ss', str(start_time),
-                '-to', str(end_time),
+                '-ss', str(start),
+                '-to', str(end),
             ],
         }
     }
     
 
-def get_video(video_url, start_time, end_time, **kwargs):
+def get_video(video_url, trim, quality):
     try:
         uuid = generate_unique_id()
         output_filename = attach_folder(
             f"{uuid}_output.mp4", folder_type="output")
-        quality = kwargs.get('quality', "")
+   
         
-        options = get_options(start_time, end_time, output_filename)
+        options = get_options(trim, output_filename)
         ydl_opts = options['options']
         
-        if quality:
+        if quality is not None:
             res = quality['resolution'].split('x')
             filesize = quality['filesize']
             ydl_opts['format'] = f'bestvideo[width<={res[0]}][height<={res[1]}][ext=mp4]+bestaudio[ext=m4a]'
@@ -153,11 +175,19 @@ def get_video(video_url, start_time, end_time, **kwargs):
                 ffmpeg_command = [
                     'ffmpeg',
                     '-i', f'{output_filename}',
-                    '-ss', str(start_time),
-                    '-to', str(end_time),
+                ]
+
+                if trim is not None:
+                    ffmpeg_command.extend([
+                        '-ss', str(math.floor(trim['start_time'])),
+                        '-to', str(math.floor(trim['end_time']) - 5),
+                    ])
+
+                ffmpeg_command.extend([
                     '-c', 'copy',
                     f'{output_filename}_trimmer.mp4',
-                ]
+                ])
+
                 subprocess.run(ffmpeg_command)
                 output_filename = f'{output_filename}_trimmer.mp4'       
             

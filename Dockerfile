@@ -26,7 +26,8 @@ RUN adduser -D -u 5678 user
 
 # Give write permissions only to specific directories
 RUN chown -R user /app
-RUN chmod 755 /app && sudo chmod 777 /app/downloads/output
+# add permissions to the whole directory
+RUN chmod -R 777 /app
 
 # Switch to the non-root user
 USER user

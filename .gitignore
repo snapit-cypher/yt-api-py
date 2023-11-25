@@ -18,6 +18,9 @@ dist/
 build/
 *.egg-info/
 
+# Ignore downloaded files
+app/downloads
+
 # Ignore VS Code specific files
 .vscode/
 

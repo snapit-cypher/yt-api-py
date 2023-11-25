@@ -10,5 +10,5 @@ services:
     volumes:
       - ./app:/app
     command: >
-      sh -c "ls -la && ls  && pwd &&  uvicorn app:app  --host 0.0.0.0 --reload"
+      sh -c "uvicorn app:app --host 0.0.0.0 --reload"
     restart: always
