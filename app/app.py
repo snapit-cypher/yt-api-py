@@ -19,7 +19,8 @@ app = FastAPI()
 origins = [
     "http://localhost:3000",
     "http://localhost:8000",
-    "https://mobbydownloader.com"
+    "https://mobbydownloader.com",
+    "https://mobby-seven.vercel.app"
 ]
 
 app.add_middleware(
