@@ -1,11 +1,6 @@
-import os
 
 import datetime
 import tempfile
-import stripe
-
-from dotenv import load_dotenv
-from supabase import create_client
 
 from fastapi import FastAPI, Query
 from starlette.responses import FileResponse
@@ -20,20 +15,11 @@ from internals.utils import (
 )
 
 app = FastAPI()
-load_dotenv()
-
-# GET ENVS
-STRIPE_SECTET_KEY = os.getenv("STRIPE_SECTET_KEY")
-SUPA_BASE_URL = os.getenv("SUPABASE_PROJECT_URL")
-SUPA_BASE_KEY = os.getenv("SUPABASE_KEY")
-FRONTEND_URL = os.getenv('FRONTEND_URL')
-
-supabase_client = create_client(SUPA_BASE_URL, SUPA_BASE_KEY)
 
 origins = [
-    "https://vid-slicer.vercel.app",
-    "https://www.downloadbazar.com",
-    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "https://mobbydownloader.com"
 ]
 
 app.add_middleware(
@@ -63,52 +49,6 @@ class Item(BaseModel):
 @app.get("/")
 def status():
     return f"The API is working fine - {datetime.datetime.now()}".upper()
-
-@app.get("/order/success")
-async def order_success(session_id: str =
-                        Query(...,
-                              title="Stripe Session",
-                              description="Id of the Stripe session"
-                              ), user_id: str = Query(...,
-                                                      title="User ID",
-                                                      description="Id of the user"
-                                                      )):
-    try:
-        stripe.api_key = STRIPE_SECTET_KEY
-        session = stripe.checkout.Session.retrieve(session_id)
-        supabase_client.table("UserProfile").update({
-            "customer_id": session['customer'],
-        }).eq('user_id', user_id).execute()
-        return RedirectResponse(url=FRONTEND_URL)
-    except Exception as e:
-        return JSONResponse(status_code=400, content={"error": str(e)})
-
-
-@app.get('/stripe/customer/subscriptions')
-async def get_user_subscription(customer_id: str =
-                                Query(...,
-                                      title="Stripe Customer Id",
-                                      description="Id of the Stripe Customer for that user"
-                                      )):
-    try:
-        stripe.api_key = STRIPE_SECTET_KEY
-        subscriptions = stripe.Subscription.list(customer=customer_id)
-
-        for subscription in subscriptions.data:
-            subscription_status = subscription.status
-            if subscription_status == "active":
-                data = {
-                    "subscription_id": subscription.id,
-                    "status": True,
-                    "plan": subscription.plan
-                }
-                return JSONResponse(status_code=200, content=data)
-
-        return JSONResponse(status_code=200, content={
-            "status": False, "plan": None, "subscription_id": None})
-    except Exception as e:
-        return JSONResponse(status_code=400, content={"error": str(e)})
-
 
 @app.get("/video_info")
 async def info_handler(url: str = Query(..., title="Item Name", description="Enter the item name")):
