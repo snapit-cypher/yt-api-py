@@ -53,7 +53,7 @@ def get_audio(video_url, trim, temp_dir):
             trim and
             [
                 '-ss', str(math.floor(trim['start_time'])),
-                '-to', str(math.floor(trim['end_time']) - 5),
+                '-to', str(math.floor(trim['end_time'])),
             ] or [],
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
@@ -180,7 +180,7 @@ def get_video(video_url, trim, quality):
                 if trim is not None:
                     ffmpeg_command.extend([
                         '-ss', str(math.floor(trim['start_time'])),
-                        '-to', str(math.floor(trim['end_time']) - 5),
+                        '-to', str(math.floor(trim['end_time'])),
                     ])
 
                 ffmpeg_command.extend([
