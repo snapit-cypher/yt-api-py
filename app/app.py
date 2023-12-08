@@ -20,7 +20,8 @@ app = FastAPI()
 origins = [
     "http://localhost:3000",
     "http://localhost:8000",
-    "https://slicetube.io"
+    "https://slicetube.io",
+    "https://www.slicetube.io"
 ]
 
 app.add_middleware(
