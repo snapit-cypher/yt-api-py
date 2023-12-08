@@ -1,5 +1,6 @@
 import re
 import math
+import os
 import yt_dlp
 import uuid
 import subprocess
@@ -54,7 +55,6 @@ def get_audio(video_url, trim, temp_dir):
             [
                 '-ss', str(math.floor(trim['start_time'])),
                 '-to', str(math.floor(trim['end_time'])),
-                '-http_persistent', '0'
             ] or [],
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
@@ -65,6 +65,11 @@ def get_audio(video_url, trim, temp_dir):
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(video_url, download=True)
+            
+            # Remove the original file, if it exists   
+            os.remove(output_filename)
+            output_filename = f'{output_filename}.mp3'
+            
             return True, f"{output_filename}.mp3"
 
     except Exception as e:
@@ -175,7 +180,6 @@ def get_video(video_url, trim, quality):
             if options['type'] == 'aria2c':
                 ffmpeg_command = [
                     'ffmpeg',
-                    '-http_persistent', '0',
                     '-i', f'{output_filename}'
                 ]
 
@@ -191,6 +195,10 @@ def get_video(video_url, trim, quality):
                 ])
 
                 subprocess.run(ffmpeg_command)
+
+                # Remove the original file, if it exists   
+                os.remove(output_filename)
+
                 output_filename = f'{output_filename}_trimmer.mp4'       
             
             return True, output_filename

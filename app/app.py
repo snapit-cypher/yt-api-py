@@ -1,9 +1,10 @@
 
 import datetime
 import tempfile
-
+import os
 from fastapi import FastAPI, Query
 from starlette.responses import FileResponse
+from starlette.background import BackgroundTask
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel
@@ -74,8 +75,11 @@ async def youtube_downloader(item: Item):
             with tempfile.TemporaryDirectory() as temp_dir:
                 status, filename = get_audio(url, trim, temp_dir)
                 if status:
-                    return FileResponse(filename, media_type="audio/mp3")
+                    task = BackgroundTask(delete_file, filename)
+                    return FileResponse(filename, media_type="audio/mp3", background=task)
                 else:
+                    # delete file anyway
+                    os.remove(filename)
                     raise Exception(filename)
 
         else:
@@ -84,9 +88,17 @@ async def youtube_downloader(item: Item):
             status, filename = get_video(
                 url, trim, quality)
             if status:
-                return FileResponse(filename)
+                task = BackgroundTask(delete_file, filename)
+                return FileResponse(filename, media_type="video/mp4", background=task)
             else:
+                # delete file anyway
+                os.remove(filename)
                 raise Exception(filename)
 
     except Exception as e:
         return JSONResponse(status_code=400, content={"error": str(e)})
+
+# create file deletion background task, to be run after response is sent
+async def delete_file(filename):
+    print(f"Deleting file {filename} from disk")
+    os.remove(filename)
