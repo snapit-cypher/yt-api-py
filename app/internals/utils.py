@@ -54,6 +54,7 @@ def get_audio(video_url, trim, temp_dir):
             [
                 '-ss', str(math.floor(trim['start_time'])),
                 '-to', str(math.floor(trim['end_time'])),
+                '-http_persistent', '0'
             ] or [],
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
@@ -175,6 +176,7 @@ def get_video(video_url, trim, quality):
                 ffmpeg_command = [
                     'ffmpeg',
                     '-i', f'{output_filename}',
+                    '-http_persistent', '0'
                 ]
 
                 if trim is not None:
