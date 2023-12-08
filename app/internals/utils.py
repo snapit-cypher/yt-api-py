@@ -175,8 +175,8 @@ def get_video(video_url, trim, quality):
             if options['type'] == 'aria2c':
                 ffmpeg_command = [
                     'ffmpeg',
-                    '-i', f'{output_filename}',
-                    '-http_persistent', '0'
+                    '-http_persistent', '0',
+                    '-i', f'{output_filename}'
                 ]
 
                 if trim is not None:
