@@ -2,7 +2,9 @@
 import datetime
 import tempfile
 import os
-from fastapi import FastAPI, Query
+import time
+import asyncio
+from fastapi import FastAPI, Query, Request
 from starlette.responses import FileResponse
 from starlette.background import BackgroundTask
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,6 +16,9 @@ from internals.utils import (
     get_video,
     get_video_information
 )
+from starlette.status import HTTP_504_GATEWAY_TIMEOUT
+
+REQUEST_TIMEOUT_ERROR = 300 # Threshold of 300 seconds
 
 app = FastAPI()
 
@@ -47,6 +52,20 @@ class Item(BaseModel):
     trim: Optional[Trim] = None
     quality: Optional[Quality] = None
 
+# Adding a middleware returning a 504 error if the request processing time is above a certain threshold
+@app.middleware("http")
+async def timeout_middleware(request: Request, call_next):
+    try:
+        print("Request processing time limit set to", REQUEST_TIMEOUT_ERROR)
+        
+        start_time = time.time()
+        return await asyncio.wait_for(call_next(request), timeout=REQUEST_TIMEOUT_ERROR)
+
+    except asyncio.TimeoutError:
+        process_time = time.time() - start_time
+        return JSONResponse({'detail': 'Request processing time excedeed limit',
+                             'processing_time': process_time},
+                            status_code=HTTP_504_GATEWAY_TIMEOUT)
 
 @app.get("/")
 def status():
